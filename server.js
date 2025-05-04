@@ -6,7 +6,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-const multer = require('multer');
+const FormData = require('form-data');
 
 const app = express();
 app.use(cors());
@@ -36,7 +36,7 @@ wss.on('connection', function connection(ws) {
     fs.writeFileSync(tempPath, fullBuffer);
 
     try {
-      // Transcribe with Whisper
+      // Prepare form data for Whisper transcription
       const formData = new FormData();
       formData.append('file', fs.createReadStream(tempPath));
       formData.append('model', 'whisper-1');
@@ -51,6 +51,7 @@ wss.on('connection', function connection(ws) {
           }
         }
       );
+
       const text = whisperResp.data.text;
 
       // Convert to accent using ElevenLabs
@@ -74,11 +75,13 @@ wss.on('connection', function connection(ws) {
       console.error("❌ Error during conversion:", err.message);
     }
 
-    fs.unlinkSync(tempPath);
+    fs.unlink(tempPath, (err) => {
+      if (err) console.error("Failed to delete temp file:", err.message);
+    });
   });
 });
 
-// New route to serve output.mp3
+// Public route to access the final output audio
 app.get('/output', (req, res) => {
   const filePath = path.join(__dirname, 'output.mp3');
   if (fs.existsSync(filePath)) {
