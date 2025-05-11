@@ -1,20 +1,14 @@
 {
-  "name": "accentshift-relay-server",
-  "version": "1.0.2",
-  "description": "WebSocket server for AccentShift AI with fixed FormData handling",
-  "main": "server.js",
+  "name": "accentshift-relay",
+  "version": "1.0.0",
+  "main": "accentRelay.js",
+  "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node accentRelay.js"
   },
   "dependencies": {
-    "axios": "^1.6.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "express": "^4.18.2",
-    "form-data": "^4.0.0",
+    "axios": "^1.4.0",
+    "dotenv": "^16.3.1",
     "ws": "^8.13.0"
-  },
-  "engines": {
-    "node": ">=14.0.0"
   }
 }
