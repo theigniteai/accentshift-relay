@@ -1,14 +1,14 @@
 {
   "name": "accentshift-relay",
   "version": "1.0.0",
-  "main": "accentRelay.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node accentRelay.js"
+    "start": "node server.js"
   },
   "dependencies": {
-    "axios": "^1.4.0",
     "dotenv": "^16.3.1",
-    "ws": "^8.13.0"
+    "ws": "^8.13.0",
+    "axios": "^1.6.7"
   }
 }
