@@ -18,7 +18,7 @@ export function initWebSocket(server) {
         const response = await axios.post(
           `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream`,
           {
-            text: "Hello! This is your accent changed voice.",
+            text: message.toString(),
             model_id: "eleven_multilingual_v2",
             voice_settings: { stability: 0.5, similarity_boost: 0.8 }
           },
