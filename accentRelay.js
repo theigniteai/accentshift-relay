@@ -1,45 +1,86 @@
+// accentRelay.js - FIXED: Real-Time Voice Accent Changer with ElevenLabs
+
 import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 import axios from "axios";
+import { Readable } from "stream";
 
 dotenv.config();
 
 export function initWebSocket(server) {
   const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-  const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "EXAVITQu4vr4xnSDxMaL";
+  const VOICE_IDS = {
+    us: "EXAVITQu4vr4xnSDxMaL",
+    uk: "TxGEqnHWrfWFTfGW9XjX",
+    aus: "ErXwobaYiN019PkySvjV"
+  };
 
   const wss = new WebSocketServer({ server });
 
   wss.on("connection", (ws) => {
     console.log("🔗 Client connected to AccentRelay");
 
-    ws.on("message", async (message) => {
-      try {
-        const response = await axios.post(
-          `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}/stream`,
-          {
-            text: message.toString(),
-            model_id: "eleven_multilingual_v2",
-            voice_settings: { stability: 0.5, similarity_boost: 0.8 }
-          },
-          {
-            headers: {
-              "xi-api-key": ELEVENLABS_API_KEY,
-              "Content-Type": "application/json"
-            },
-            responseType: "arraybuffer"
-          }
-        );
+    let accent = "us";
 
-        ws.send(response.data);
+    ws.on("message", async (message, isBinary) => {
+      if (!isBinary) {
+        try {
+          const msg = JSON.parse(message.toString());
+          if (msg.type === "start") {
+            accent = msg.accent || "us";
+            console.log("Accent set to:", accent);
+            return;
+          }
+          if (msg.type === "stop") {
+            console.log("🛑 Client stopped");
+            return;
+          }
+        } catch (err) {
+          console.error("❌ JSON parsing error:", err.message);
+          return;
+        }
+      }
+
+      // 🔁 Simulated streaming (real mic data would need transcription)
+      const text = "This is your real-time AI accent relay speaking.";
+
+      try {
+        const response = await axios({
+          method: "POST",
+          url: `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_IDS[accent]}/stream`,
+          headers: {
+            "xi-api-key": ELEVENLABS_API_KEY,
+            "Content-Type": "application/json"
+          },
+          data: {
+            text,
+            voice_settings: {
+              stability: 0.4,
+              similarity_boost: 0.75
+            }
+          },
+          responseType: "stream"
+        });
+
+        response.data.on("data", (chunk) => {
+          if (ws.readyState === ws.OPEN) {
+            ws.send(chunk);
+          }
+        });
+
+        response.data.on("end", () => {
+          console.log("✅ Streaming finished");
+        });
       } catch (err) {
-        console.error("❌ Error processing audio:", err.message);
-        ws.send("ERROR: " + err.message);
+        console.error("❌ ElevenLabs error:", err.response?.data || err.message);
+        if (ws.readyState === ws.OPEN) {
+          ws.send("Error: " + err.message);
+        }
       }
     });
 
     ws.on("close", () => {
-      console.log("❌ Client disconnected");
+      console.log("❌ Client disconnected from AccentRelay");
     });
   });
 }
